@@ -27,7 +27,17 @@ from insights_engine import answer_question, generate_account_explanation, gener
 st.set_page_config(page_title="GenAI Risk Insights Assistant", page_icon="🧠", layout="wide")
 
 st.title("🧠 GenAI Risk Insights Assistant")
-st.caption("Narrative layer on top of the credit-default-risk-dashboard model output.")
+st.markdown(
+    "Takes a **scored** credit-risk portfolio (probability of default, risk band, "
+    "expected loss per account — the output of the companion "
+    "**credit-default-risk-dashboard** project) and adds a generative-AI layer on "
+    "top: an auto-written portfolio briefing, plain-English explanations of why a "
+    "specific account was scored the way it was, and a Q&A assistant. Every answer "
+    "is explicitly restricted to the numbers it's actually given — it's told to say "
+    "so, not guess, if the data can't answer a question. Try the bundled sample "
+    "below, or upload your own scored data in the sidebar."
+)
+st.divider()
 
 # --- Sidebar: data source + LLM mode ---
 st.sidebar.header("Data source")
@@ -47,10 +57,27 @@ if source_choice == "Bundled sample (500 accounts)":
     df = pd.read_csv(default_path)
 
 elif source_choice == "Upload a scored CSV":
-    st.sidebar.caption(
-        "Needs a file already scored by the **credit-default-risk-dashboard** project — "
-        "use its sidebar's 'Download this scored portfolio as CSV' button, then upload it here."
-    )
+    with st.sidebar.expander("📋 Before you upload — what your CSV needs", expanded=True):
+        st.markdown(
+            """
+This app narrates data that's **already been scored** — it doesn't run any
+model itself. Get a file in the right shape one of two ways:
+
+1. **Easiest:** open the **credit-default-risk-dashboard** app, optionally
+   upload your own raw accounts there, then use its sidebar's
+   **"⬇️ Download this scored portfolio as CSV"** button and upload that
+   file here as-is.
+2. **Manual:** build your own CSV with one row per account and at least
+   these columns: `account_id`, `credit_limit`, `pd_score` (0–1 probability),
+   `risk_band` (Low / Medium / High / Severe), `expected_loss`, `ead`
+   (exposure at default), `age_band`.
+
+**Things to double-check first:**
+- `pd_score` should be a decimal probability (e.g. `0.23`), not a percentage.
+- `risk_band` must use exactly those four labels.
+- A missing required column stops the upload with a clear error naming what's missing.
+            """
+        )
     uploaded = st.sidebar.file_uploader("Scored portfolio CSV", type="csv")
     if uploaded is not None:
         candidate = pd.read_csv(uploaded)
