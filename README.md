@@ -51,13 +51,20 @@ Prefer a fully free/local model instead of paying for API calls? Swap in
 add a branch to `src/llm_client.py::generate()` following the same pattern
 as the OpenAI branch. The rest of the app doesn't need to change.
 
-## Using your own model's output instead of the sample data
+## Using your own data instead of the sample
 
-Run the `credit-default-risk-dashboard` project first, then point this app
-at its output via the sidebar text box:
-```
-../credit-default-risk-dashboard/data/processed/scored_portfolio.csv
-```
+The sidebar has three data-source options:
+
+1. **Bundled sample** — 500 accounts, works immediately, no setup.
+2. **Upload a scored CSV** — for anyone visiting the live deployed app,
+   including strangers with no access to your machine. Run the
+   `credit-default-risk-dashboard` app first (upload your own raw data there
+   too, if you like), click its **"Download this scored portfolio as CSV"**
+   button, then upload that file here. Required columns: `account_id`,
+   `credit_limit`, `pd_score`, `risk_band`, `expected_loss`, `ead`, `age_band`.
+3. **Local file path (advanced)** — only works when running on your own
+   machine, not on a deployed app: point it directly at
+   `../credit-default-risk-dashboard/data/processed/scored_portfolio.csv`.
 
 ## Project structure
 
@@ -75,8 +82,7 @@ genai-risk-insights-assistant/
 
 ## A note on the sample data
 
-`scored_portfolio_sample.csv` is a small, clearly-synthetic sample (see the
-sibling `credit-default-risk-dashboard` project's README for how it's
-generated) — it exists purely so this repo demos on its own without
-requiring the other project to be run first. Swap in your own real model
-output for anything beyond a demo.
+`scored_portfolio_sample.csv` is a small, clearly-synthetic sample — it
+exists purely so this repo demos on its own without requiring the other
+project to be run first. Use the "Upload a scored CSV" option for anything
+beyond a first look.

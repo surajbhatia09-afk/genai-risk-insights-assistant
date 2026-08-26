@@ -30,10 +30,57 @@ st.title("🧠 GenAI Risk Insights Assistant")
 st.caption("Narrative layer on top of the credit-default-risk-dashboard model output.")
 
 # --- Sidebar: data source + LLM mode ---
-st.sidebar.header("Settings")
+st.sidebar.header("Data source")
+
+REQUIRED_COLS = ["account_id", "credit_limit", "pd_score", "risk_band", "expected_loss", "ead", "age_band"]
+
+source_choice = st.sidebar.radio(
+    "Use...",
+    ["Bundled sample (500 accounts)", "Upload a scored CSV", "Local file path (advanced)"],
+    index=0,
+)
 
 default_path = Path(__file__).resolve().parent / "sample_data" / "scored_portfolio_sample.csv"
-data_path = st.sidebar.text_input("Scored portfolio CSV path", value=str(default_path))
+df = None
+
+if source_choice == "Bundled sample (500 accounts)":
+    df = pd.read_csv(default_path)
+
+elif source_choice == "Upload a scored CSV":
+    st.sidebar.caption(
+        "Needs a file already scored by the **credit-default-risk-dashboard** project — "
+        "use its sidebar's 'Download this scored portfolio as CSV' button, then upload it here."
+    )
+    uploaded = st.sidebar.file_uploader("Scored portfolio CSV", type="csv")
+    if uploaded is not None:
+        candidate = pd.read_csv(uploaded)
+        missing = [c for c in REQUIRED_COLS if c not in candidate.columns]
+        if missing:
+            st.sidebar.error(
+                "This doesn't look like a scored file — missing: " + ", ".join(missing) +
+                ". Upload the CSV exported by the credit-default-risk-dashboard app, not raw data."
+            )
+            st.stop()
+        df = candidate
+        st.sidebar.success(f"Loaded {len(df):,} accounts from your upload.")
+    else:
+        st.info("⬆️ Upload a scored CSV in the sidebar, or switch to the bundled sample to try the app first.")
+        st.stop()
+
+else:  # Local file path (advanced)
+    data_path = st.sidebar.text_input(
+        "Path on this machine",
+        value=str(default_path),
+        help="Only works when running locally — a deployed app can't see paths on your computer.",
+    )
+    try:
+        df = pd.read_csv(data_path)
+    except FileNotFoundError:
+        st.error(f"Couldn't find {data_path}")
+        st.stop()
+
+st.sidebar.divider()
+st.sidebar.header("LLM mode")
 
 import os
 
@@ -49,12 +96,6 @@ st.sidebar.caption(
     else "⚠️ No OPENAI_API_KEY set — running in free offline demo mode. "
          "See README.md to add a key."
 )
-
-try:
-    df = pd.read_csv(data_path)
-except FileNotFoundError:
-    st.error(f"Couldn't find {data_path}")
-    st.stop()
 
 tab1, tab2, tab3 = st.tabs(["📋 Portfolio Briefing", "🔍 Explain an Account", "💬 Ask the Assistant"])
 
